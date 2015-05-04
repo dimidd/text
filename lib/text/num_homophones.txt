@@ -1,0 +1,6 @@
+one, done, dun, none, nun, won
+two, to, too
+three, tree, free
+four, for, fore
+six, sics, fix
+eight, ate, wait, weight, hate

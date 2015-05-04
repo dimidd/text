@@ -55,6 +55,13 @@ module Levenshtein
   end
 
   def phon_dist(str1, str2, max_distance = nil)
+    root = File.dirname __dir__
+    dir = File.join(root, 'text')
+    grep = %x(grep -w #{str1} #{dir}/nh_0.txt)
+    unless grep.empty?
+      homophones = grep[0..-2].split(',').map(&:strip)
+      return 0 if homophones.include?(str1) && homophones.include?(str2)
+    end
     if max_distance
       distance_with_maximum(str1, str2, max_distance, method(:phon_cost))
     else
@@ -189,4 +196,5 @@ if $0 == __FILE__
   include Text
   p Levenshtein.distance("to", "to", 3)
   p Levenshtein.phon_dist("do", "to", 3)
+  p Levenshtein.phon_dist("two", "to", 3)
 end
