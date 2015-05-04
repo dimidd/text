@@ -26,16 +26,44 @@ module Levenshtein
   # of different normalised forms being used, normalisation should be performed
   # beforehand.
   #
-  def distance(str1, str2, max_distance = nil)
+
+  # Pairs of voiced and voiceless consonants
+  # http://en.wikipedia.org/wiki/English_phonology
+  
+  def self.enc(s)
+    s.encode(Encoding::UTF_8).unpack("U*")[0]
+  end
+
+  PAIRS = {'p' => 'b', 't' =>	'd', 'k' =>	'g', 'f' =>	'v', 's' =>	'z'}
+  PAIRS_ENC = Hash[PAIRS.map{|k, v| [enc(k), enc(v)]}]
+
+  def phon_cost(a, b)
+    return 0 if a == b
+    return a && (PAIRS_ENC[a] == b || PAIRS_ENC[b] == a) ? 0 : 1
+  end
+
+  def simple_cost(a, b)
+    a == b ? 0 : 1
+  end
+
+  def distance(str1, str2, max_distance = nil, cost_func = method(:simple_cost))
     if max_distance
-      distance_with_maximum(str1, str2, max_distance)
+      distance_with_maximum(str1, str2, max_distance, cost_func)
     else
-      distance_without_maximum(str1, str2)
+      distance_without_maximum(str1, str2, cost_func)
+    end
+  end
+
+  def phon_dist(str1, str2, max_distance = nil)
+    if max_distance
+      distance_with_maximum(str1, str2, max_distance, method(:phon_cost))
+    else
+      distance_without_maximum(str1, str2, method(:phon_cost))
     end
   end
 
 private
-  def distance_with_maximum(str1, str2, max_distance) # :nodoc:
+  def distance_with_maximum(str1, str2, max_distance, cost_func) # :nodoc:
     s = str1.encode(Encoding::UTF_8).unpack("U*")
     t = str2.encode(Encoding::UTF_8).unpack("U*")
 
@@ -102,10 +130,9 @@ private
           return max_distance
         end
 
-        cost = s[i] == t[j] ? 0 : 1
         insertion = d[j + 1] + 1
         deletion = e + 1
-        substitution = d[j] + cost
+        substitution = d[j] + cost_func.call(s[i], t[j])
         x = insertion < deletion ? insertion : deletion
         x = substitution if substitution < x
 
@@ -122,7 +149,7 @@ private
     end
   end
 
-  def distance_without_maximum(str1, str2) # :nodoc:
+  def distance_without_maximum(str1, str2, cost_func) # :nodoc:
     s = str1.encode(Encoding::UTF_8).unpack("U*")
     t = str2.encode(Encoding::UTF_8).unpack("U*")
 
@@ -138,10 +165,9 @@ private
     n.times do |i|
       e = i + 1
       m.times do |j|
-        cost = s[i] == t[j] ? 0 : 1
         insertion = d[j + 1] + 1
         deletion = e + 1
-        substitution = d[j] + cost
+        substitution = d[j] + cost_func.call(s[i], t[j])
         x = insertion < deletion ? insertion : deletion
         x = substitution if substitution < x
 
@@ -156,4 +182,11 @@ private
 
   extend self
 end
+end
+
+# TODO: move to test dir, add more cases
+if $0 == __FILE__
+  include Text
+  p Levenshtein.distance("to", "to", 3)
+  p Levenshtein.phon_dist("do", "to", 3)
 end
