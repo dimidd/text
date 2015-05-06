@@ -71,8 +71,8 @@ module Levenshtein
 
 private
   def distance_with_maximum(str1, str2, max_distance, cost_func) # :nodoc:
-    s = str1.encode(Encoding::UTF_8).unpack("U*")
-    t = str2.encode(Encoding::UTF_8).unpack("U*")
+    s = (str1.is_a? String)? str1.encode(Encoding::UTF_8).unpack("U*") : str1
+    t = (str2.is_a? String)? str2.encode(Encoding::UTF_8).unpack("U*") : str2
 
     n = s.length
     m = t.length
@@ -157,8 +157,8 @@ private
   end
 
   def distance_without_maximum(str1, str2, cost_func) # :nodoc:
-    s = str1.encode(Encoding::UTF_8).unpack("U*")
-    t = str2.encode(Encoding::UTF_8).unpack("U*")
+    s = (str1.is_a? String)? str1.encode(Encoding::UTF_8).unpack("U*") : str1
+    t = (str2.is_a? String)? str2.encode(Encoding::UTF_8).unpack("U*") : str2
 
     n = s.length
     m = t.length
